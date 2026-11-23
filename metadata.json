@@ -1,0 +1,8 @@
+{
+  "name": "Remix 빼빼로 룰렛 뽑기",
+  "description": "평택초등학교 폰프리스쿨 독서 퀴즈 달콤한 빼빼로 랜덤 룰렛 뽑기 웹앱",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

@@ -1,0 +1,72 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    --font-cute: 'Jua', 'Gowun Dodum', -apple-system, BlinkMacSystemFont, sans-serif;
+    --font-body: 'Gowun Dodum', 'Jua', -apple-system, BlinkMacSystemFont, sans-serif;
+  }
+
+  body {
+    font-family: var(--font-cute);
+    margin: 0;
+    padding: 0;
+    overflow-x: hidden;
+    color: #4a251d;
+    background-color: #fdf2f4;
+    -webkit-font-smoothing: antialiased;
+  }
+}
+
+.font-cute {
+  font-family: var(--font-cute);
+}
+
+.font-cute-body {
+  font-family: var(--font-body);
+}
+
+/* Pastel polka-dot background matching the reference aesthetic */
+.bg-pastel-dots {
+  background-color: #fdf3ee;
+  background-image:
+    radial-gradient(rgba(255, 255, 255, 0.78) 3px, transparent 3px),
+    linear-gradient(125deg, #fcdce4 0%, #fef7dc 52%, #dff4e4 100%);
+  background-size: 30px 30px, 100% 100%;
+  background-position: 0 0, 0 0;
+}
+
+/* Crisp, high-legibility cute title & subtitle shadows */
+.title-choco-outline {
+  color: #4b261e;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.8);
+}
+
+.subtitle-choco-outline {
+  color: #4b261e;
+  text-shadow:
+    -2px -2px 0 #ffffff,
+     2px -2px 0 #ffffff,
+    -2px  2px 0 #ffffff,
+     2px  2px 0 #ffffff,
+     0px -2px 0 #ffffff,
+     0px  2px 0 #ffffff,
+    -2px  0px 0 #ffffff,
+     2px  0px 0 #ffffff,
+     0px  4px 8px rgba(83, 38, 27, 0.16);
+}
+
+@keyframes floatSlow {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
