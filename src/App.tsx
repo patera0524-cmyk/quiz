@@ -132,15 +132,15 @@ export default function App() {
     const currentMod = ((startRotation % 360) + 360) % 360;
     const deltaMod = (desiredMod - currentMod + 360) % 360;
 
-    // 7 to 9 full high-speed spins
-    const extraRevolutions = 7 + Math.floor(getSecureRandomUnit() * 3);
+    // 12 to 15 full high-speed spins for a longer, suspenseful spin
+    const extraRevolutions = 12 + Math.floor(getSecureRandomUnit() * 4);
     const totalDelta = extraRevolutions * 360 + deltaMod;
     const targetRotation = startRotation + totalDelta;
 
     const prefersReducedMotion =
       typeof window !== 'undefined' &&
       window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    const durationMs = prefersReducedMotion ? 600 : 4400;
+    const durationMs = prefersReducedMotion ? 600 : 7200;
 
     const startTime = performance.now();
     let lastPegIndex = Math.floor(startRotation / 30);
@@ -149,8 +149,8 @@ export default function App() {
       const elapsed = now - startTime;
       const t = Math.min(1, elapsed / durationMs);
 
-      // Quartic ease-out: ultra-fast launch, smooth suspenseful deceleration
-      const eased = 1 - Math.pow(1 - t, 4);
+      // Smooth ease-out: energetic launch followed by a long, suspenseful slowdown
+      const eased = 1 - Math.pow(1 - t, 3.5);
       const currentRot = startRotation + totalDelta * eased;
 
       rotationRef.current = currentRot;
@@ -160,7 +160,7 @@ export default function App() {
       const pegIndex = Math.floor(currentRot / 30);
       if (pegIndex > lastPegIndex && t < 0.995) {
         lastPegIndex = pegIndex;
-        const speedRatio = Math.pow(1 - t, 3);
+        const speedRatio = Math.pow(1 - t, 2.5);
         playTickSound(soundEnabledRef.current, speedRatio);
         setPointerKick(-11);
         if (kickTimeoutRef.current !== null) window.clearTimeout(kickTimeoutRef.current);
@@ -303,11 +303,7 @@ export default function App() {
 
       {/* Bottom Prompt & Draw Count Tally (never exposes remaining inventory or secret ratios) */}
       <footer className="relative z-10 flex shrink-0 flex-col items-center gap-1.5 text-center">
-        <div
-          className={`rounded-full border border-[#4B261E]/15 bg-[#FFFDF9]/90 px-5 py-1.5 text-[clamp(0.85rem,2vw,1.02rem)] text-[#53261B] shadow-[0_4px_12px_rgba(75,38,30,0.08)] ${
-            isSpinning || isDepleted ? 'block' : 'lg:hidden'
-          }`}
-        >
+        <div className="rounded-full border border-[#4B261E]/15 bg-[#FFFDF9]/90 px-5 py-1.5 text-[clamp(0.85rem,2vw,1.02rem)] text-[#53261B] shadow-[0_4px_12px_rgba(75,38,30,0.08)]">
           {isDepleted
             ? '준비된 빼빼로 선물이 모두 소진되었어요!'
             : isSpinning

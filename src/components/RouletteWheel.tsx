@@ -68,7 +68,7 @@ export function RouletteWheel({
   };
 
   return (
-    <div className="relative mx-auto flex aspect-square w-[min(88vw,calc(100dvh-215px),620px)] min-w-[260px] items-center justify-center select-none">
+    <div className="relative mx-auto flex aspect-square w-[min(88vw,calc(100dvh-235px),600px)] min-w-[260px] items-center justify-center select-none">
       {/* Soft ambient ground shadow under wheel */}
       <div
         aria-hidden="true"

@@ -90,7 +90,7 @@ export function ThemeBackground() {
 
       {/* Left Group: Speech Bubble emerging directly from the Stacked Books */}
       <div className="absolute bottom-[7%] left-[1.5%] hidden flex-col items-start lg:flex xl:left-[3.5%]">
-        <div className="relative w-[220px] animate-[floatSlow_6s_ease-in-out_infinite] rounded-[28px] border-[3.5px] border-[#4B261E] bg-[#FFFDF9]/95 px-4 py-4 text-center shadow-[0_6px_0_#F9AEBE,0_12px_24px_rgba(75,38,30,0.12)] xl:w-[315px] xl:px-6 xl:py-5">
+        <div className="relative w-[220px] rounded-[28px] border-[3.5px] border-[#4B261E] bg-[#FFFDF9]/95 px-4 py-4 text-center shadow-[0_6px_0_#F9AEBE,0_12px_24px_rgba(75,38,30,0.12)] xl:w-[315px] xl:px-6 xl:py-5">
           <div className="mb-1.5 inline-flex items-center gap-1 rounded-full bg-[#FFE6EE] px-3 py-0.5 text-sm text-[#D93660] xl:text-base">
             <span>📖</span>
             <span>독서 퀴즈 미션!</span>
@@ -122,7 +122,7 @@ export function ThemeBackground() {
 
       {/* Right Speech Bubble: Emerging directly from the Roulette Wheel */}
       <div className="absolute right-[1.5%] top-[48%] hidden w-[215px] -translate-y-1/2 lg:block xl:right-[4%] xl:w-[305px]">
-        <div className="relative animate-[floatSlow_6.4s_ease-in-out_infinite_0.5s] rounded-[28px] border-[3.5px] border-[#4B261E] bg-[#FFFDF9]/95 px-4 py-4 text-center shadow-[0_6px_0_#FDE08D,0_12px_24px_rgba(75,38,30,0.12)] xl:px-6 xl:py-5">
+        <div className="relative rounded-[28px] border-[3.5px] border-[#4B261E] bg-[#FFFDF9]/95 px-4 py-4 text-center shadow-[0_6px_0_#FDE08D,0_12px_24px_rgba(75,38,30,0.12)] xl:px-6 xl:py-5">
           <div className="mb-1.5 inline-flex items-center gap-1 rounded-full bg-[#FEF3C7] px-3 py-0.5 text-sm text-[#B45309] xl:text-base">
             <span>🎯</span>
             <span>룰렛 안내</span>
@@ -161,11 +161,10 @@ export function ThemeBackground() {
       {randomStickers.map((sticker, idx) => (
         <div
           key={idx}
-          className={`absolute hidden sm:block ${sticker.sizeClass} ${sticker.opacityClass} animate-[floatSlow_5.5s_ease-in-out_infinite]`}
+          className={`absolute hidden sm:block ${sticker.sizeClass} ${sticker.opacityClass}`}
           style={{
             left: `${sticker.x.toFixed(1)}%`,
             top: `${sticker.y.toFixed(1)}%`,
-            animationDelay: `${sticker.delay}s`,
           }}
         >
           <span
