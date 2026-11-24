@@ -21,6 +21,12 @@ export interface PeperoPrize {
   endAngle: number;
 }
 
+export const INITIAL_STOCK: Record<PeperoPrize['id'], number> = {
+  choco: 48,
+  almond: 27,
+  chocofilled: 24,
+};
+
 export const PEPERO_PRIZES: PeperoPrize[] = [
   {
     id: 'chocofilled',
@@ -33,7 +39,7 @@ export const PEPERO_PRIZES: PeperoPrize[] = [
     accentBg: '#FEF7D6',
     textColor: '#A16207',
     imageUrl: peperoChocoFilledImg,
-    weight: 3,
+    weight: INITIAL_STOCK.chocofilled,
     startAngle: 0,
     endAngle: 120,
   },
@@ -48,7 +54,7 @@ export const PEPERO_PRIZES: PeperoPrize[] = [
     accentBg: '#E4F7E7',
     textColor: '#15803D',
     imageUrl: peperoAlmondImg,
-    weight: 3,
+    weight: INITIAL_STOCK.almond,
     startAngle: 120,
     endAngle: 240,
   },
@@ -63,15 +69,44 @@ export const PEPERO_PRIZES: PeperoPrize[] = [
     accentBg: '#FEE6E6',
     textColor: '#B91C1C',
     imageUrl: peperoChocoImg,
-    weight: 4,
+    weight: INITIAL_STOCK.choco,
     startAngle: 240,
     endAngle: 360,
   },
 ];
 
+const CHOCO_PRIORITY_BOOST = 2.2;
+
 /**
- * Selects a prize according to the configured 4:3:3 weights using a uniform
- * random value in [0, 1).
+ * Selects a prize dynamically from remaining stock, with extra priority on Original Choco
+ * while still adjusting automatically on every draw and never picking a depleted flavor.
+ */
+export function pickPrizeByRemaining(
+  remaining: Record<PeperoPrize['id'], number>,
+  randomUnit: number
+): PeperoPrize | null {
+  const available = PEPERO_PRIZES.filter((p) => (remaining[p.id] ?? 0) > 0);
+  if (available.length === 0) return null;
+
+  const getEffectiveWeight = (prize: PeperoPrize) => {
+    const count = remaining[prize.id];
+    return prize.id === 'choco' ? count * CHOCO_PRIORITY_BOOST : count;
+  };
+
+  const totalWeight = available.reduce((sum, p) => sum + getEffectiveWeight(p), 0);
+  let threshold = randomUnit * totalWeight;
+  for (const prize of available) {
+    const weight = getEffectiveWeight(prize);
+    if (threshold < weight) {
+      return prize;
+    }
+    threshold -= weight;
+  }
+  return available[available.length - 1];
+}
+
+/**
+ * Selects a prize according to the initial weights using a uniform random value in [0, 1).
  */
 export function pickWeightedPrize(randomUnit: number): PeperoPrize {
   const totalWeight = PEPERO_PRIZES.reduce((sum, p) => sum + p.weight, 0);

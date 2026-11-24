@@ -4,6 +4,7 @@ import { PEPERO_PRIZES, PeperoPrize } from '../types/roulette';
 interface RouletteWheelProps {
   rotation: number;
   isSpinning: boolean;
+  isDisabled?: boolean;
   pointerKick: number;
   onSpin: () => void;
 }
@@ -52,6 +53,7 @@ function createTextArcPath(
 export function RouletteWheel({
   rotation,
   isSpinning,
+  isDisabled = false,
   pointerKick,
   onSpin,
 }: RouletteWheelProps) {
@@ -250,16 +252,16 @@ export function RouletteWheel({
       <button
         type="button"
         onClick={onSpin}
-        disabled={isSpinning}
-        aria-label={isSpinning ? '룰렛 회전 중' : '룰렛 시작하기'}
-        className={`font-cute absolute left-1/2 top-1/2 z-30 flex h-[23.5%] w-[23.5%] min-h-[84px] min-w-[84px] -translate-x-1/2 -translate-y-1/2 cursor-pointer items-center justify-center rounded-full border-[5px] border-white bg-gradient-to-b from-[#FF7B95] via-[#F75375] to-[#DF385B] text-white shadow-[0_6px_0_#A92341,0_12px_24px_rgba(75,38,30,0.28)] transition-all duration-150 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#4B261E]/40 ${
-          isSpinning
-            ? 'scale-95 cursor-not-allowed opacity-90 shadow-[0_3px_0_#A92341,0_6px_12px_rgba(75,38,30,0.2)]'
-            : 'hover:scale-105 hover:brightness-105 active:translate-y-[-46%] active:scale-95'
+        disabled={isSpinning || isDisabled}
+        aria-label={isDisabled ? '모든 빼빼로 소진됨' : isSpinning ? '룰렛 회전 중' : '룰렛 시작하기'}
+        className={`font-cute absolute left-1/2 top-1/2 z-30 flex h-[23.5%] w-[23.5%] min-h-[84px] min-w-[84px] -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border-[5px] border-white bg-gradient-to-b from-[#FF7B95] via-[#F75375] to-[#DF385B] text-white shadow-[0_6px_0_#A92341,0_12px_24px_rgba(75,38,30,0.28)] transition-all duration-150 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#4B261E]/40 ${
+          isSpinning || isDisabled
+            ? 'scale-95 cursor-not-allowed opacity-85 shadow-[0_3px_0_#A92341,0_6px_12px_rgba(75,38,30,0.2)]'
+            : 'cursor-pointer hover:scale-105 hover:brightness-105 active:translate-y-[-46%] active:scale-95'
         }`}
       >
         <span className="text-[clamp(1.35rem,3.4vw,1.95rem)] tracking-wide drop-shadow-[0_2px_0_rgba(125,20,44,0.45)] whitespace-nowrap">
-          {isSpinning ? '두근!' : '시작!'}
+          {isDisabled ? '완료!' : isSpinning ? '두근!' : '시작!'}
         </span>
       </button>
     </div>

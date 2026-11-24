@@ -5,11 +5,12 @@ import { PeperoPrize } from '../types/roulette';
 
 interface ResultModalProps {
   prize: PeperoPrize | null;
+  canSpinAgain?: boolean;
   onClose: () => void;
   onSpinAgain: () => void;
 }
 
-export function ResultModal({ prize, onClose, onSpinAgain }: ResultModalProps) {
+export function ResultModal({ prize, canSpinAgain = true, onClose, onSpinAgain }: ResultModalProps) {
   const [imgError, setImgError] = useState(false);
 
   useEffect(() => {
@@ -180,14 +181,16 @@ export function ResultModal({ prize, onClose, onSpinAgain }: ResultModalProps) {
               transition={{ delay: 0.36, duration: 0.3 }}
               className="mt-6 flex items-center justify-center gap-3.5"
             >
-              <button
-                type="button"
-                onClick={onSpinAgain}
-                className="flex flex-1 cursor-pointer items-center justify-center gap-2 rounded-2xl border-2 border-[#4B261E] bg-gradient-to-b from-[#FF7590] to-[#EE4568] px-6 py-3.5 text-xl text-white shadow-[0_4px_0_#4B261E] transition-transform hover:brightness-105 active:translate-y-0.5 active:shadow-[0_2px_0_#4B261E] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#FF5E82]/40 whitespace-nowrap"
-              >
-                <RotateCcw className="h-5 w-5" />
-                <span>한 번 더 돌리기</span>
-              </button>
+              {canSpinAgain && (
+                <button
+                  type="button"
+                  onClick={onSpinAgain}
+                  className="flex flex-1 cursor-pointer items-center justify-center gap-2 rounded-2xl border-2 border-[#4B261E] bg-gradient-to-b from-[#FF7590] to-[#EE4568] px-6 py-3.5 text-xl text-white shadow-[0_4px_0_#4B261E] transition-transform hover:brightness-105 active:translate-y-0.5 active:shadow-[0_2px_0_#4B261E] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#FF5E82]/40 whitespace-nowrap"
+                >
+                  <RotateCcw className="h-5 w-5" />
+                  <span>한 번 더 돌리기</span>
+                </button>
+              )}
               <button
                 type="button"
                 onClick={onClose}

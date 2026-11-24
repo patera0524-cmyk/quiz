@@ -4,8 +4,58 @@ import { ConfettiOverlay } from './components/ConfettiOverlay';
 import { ResultModal } from './components/ResultModal';
 import { RouletteWheel } from './components/RouletteWheel';
 import { ThemeBackground } from './components/ThemeBackground';
-import { getPrizeAtRotation, pickWeightedPrize, PeperoPrize } from './types/roulette';
+import {
+  getPrizeAtRotation,
+  INITIAL_STOCK,
+  PeperoPrize,
+  pickPrizeByRemaining,
+} from './types/roulette';
 import { playApplauseSound, playStartSound, playTickSound, playWinFanfare } from './utils/sound';
+
+const STORAGE_KEY = 'pepero_roulette_inventory_v1';
+
+interface PersistedState {
+  drawCounts: Record<PeperoPrize['id'], number>;
+  remainingCounts: Record<PeperoPrize['id'], number>;
+}
+
+function loadInitialState(): PersistedState {
+  const defaultState: PersistedState = {
+    drawCounts: { choco: 0, chocofilled: 0, almond: 0 },
+    remainingCounts: { ...INITIAL_STOCK },
+  };
+  if (typeof window === 'undefined') return defaultState;
+  try {
+    const raw = window.localStorage.getItem(STORAGE_KEY);
+    if (!raw) return defaultState;
+    const parsed = JSON.parse(raw) as Partial<PersistedState>;
+    const validNum = (v: unknown, fallback: number) =>
+      typeof v === 'number' && Number.isFinite(v) && v >= 0 ? Math.floor(v) : fallback;
+    return {
+      drawCounts: {
+        choco: validNum(parsed.drawCounts?.choco, 0),
+        chocofilled: validNum(parsed.drawCounts?.chocofilled, 0),
+        almond: validNum(parsed.drawCounts?.almond, 0),
+      },
+      remainingCounts: {
+        choco: validNum(parsed.remainingCounts?.choco, INITIAL_STOCK.choco),
+        chocofilled: validNum(parsed.remainingCounts?.chocofilled, INITIAL_STOCK.chocofilled),
+        almond: validNum(parsed.remainingCounts?.almond, INITIAL_STOCK.almond),
+      },
+    };
+  } catch {
+    return defaultState;
+  }
+}
+
+function saveState(state: PersistedState): void {
+  if (typeof window === 'undefined') return;
+  try {
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  } catch {
+    // Ignore storage errors (e.g., private browsing or restricted file://)
+  }
+}
 
 function getSecureRandomUnit(): number {
   if (typeof window !== 'undefined' && window.crypto?.getRandomValues) {
@@ -23,13 +73,17 @@ export default function App() {
   const [pointerKick, setPointerKick] = useState<number>(0);
   const [winningPrize, setWinningPrize] = useState<PeperoPrize | null>(null);
   const [showConfetti, setShowConfetti] = useState<boolean>(false);
-  const [drawCounts, setDrawCounts] = useState<Record<PeperoPrize['id'], number>>({
-    choco: 0,
-    chocofilled: 0,
-    almond: 0,
-  });
+  const [initialState] = useState<PersistedState>(() => loadInitialState());
+  const [drawCounts, setDrawCounts] = useState<Record<PeperoPrize['id'], number>>(
+    initialState.drawCounts
+  );
+  const [remainingCounts, setRemainingCounts] = useState<Record<PeperoPrize['id'], number>>(
+    initialState.remainingCounts
+  );
 
   const rotationRef = useRef<number>(0);
+  const remainingRef = useRef<Record<PeperoPrize['id'], number>>(initialState.remainingCounts);
+  const drawCountsRef = useRef<Record<PeperoPrize['id'], number>>(initialState.drawCounts);
   const rafRef = useRef<number | null>(null);
   const kickTimeoutRef = useRef<number | null>(null);
   const confettiTimeoutRef = useRef<number | null>(null);
@@ -38,6 +92,14 @@ export default function App() {
   useEffect(() => {
     soundEnabledRef.current = soundEnabled;
   }, [soundEnabled]);
+
+  useEffect(() => {
+    remainingRef.current = remainingCounts;
+  }, [remainingCounts]);
+
+  useEffect(() => {
+    drawCountsRef.current = drawCounts;
+  }, [drawCounts]);
 
   useEffect(() => {
     return () => {
@@ -50,13 +112,15 @@ export default function App() {
   const triggerSpin = useCallback(() => {
     if (isSpinning) return;
 
+    // Pick a slice weighted dynamically by current remaining inventory (secret ratio)
+    const chosenSlice = pickPrizeByRemaining(remainingRef.current, getSecureRandomUnit());
+    if (!chosenSlice) return;
+
     setWinningPrize(null);
     setShowConfetti(false);
     setIsSpinning(true);
     playStartSound(soundEnabledRef.current);
 
-    // Pick a weighted random slice (4:3:3 for Choco : Choco-Filled : Almond) while keeping equal 120-deg slices
-    const chosenSlice = pickWeightedPrize(getSecureRandomUnit());
     const safeMargin = 16; // stay at least 16 deg away from 120-deg boundaries
     const sliceSpan = chosenSlice.endAngle - chosenSlice.startAngle - safeMargin * 2;
     const targetWheelAngle =
@@ -113,11 +177,21 @@ export default function App() {
         setIsSpinning(false);
 
         const actualWinner = getPrizeAtRotation(targetRotation);
+        const nextDrawCounts: Record<PeperoPrize['id'], number> = {
+          ...drawCountsRef.current,
+          [actualWinner.id]: drawCountsRef.current[actualWinner.id] + 1,
+        };
+        const nextRemainingCounts: Record<PeperoPrize['id'], number> = {
+          ...remainingRef.current,
+          [actualWinner.id]: Math.max(0, remainingRef.current[actualWinner.id] - 1),
+        };
+        drawCountsRef.current = nextDrawCounts;
+        remainingRef.current = nextRemainingCounts;
+        setDrawCounts(nextDrawCounts);
+        setRemainingCounts(nextRemainingCounts);
+        saveState({ drawCounts: nextDrawCounts, remainingCounts: nextRemainingCounts });
+
         setWinningPrize(actualWinner);
-        setDrawCounts((prev) => ({
-          ...prev,
-          [actualWinner.id]: prev[actualWinner.id] + 1,
-        }));
         playWinFanfare(soundEnabledRef.current);
         playApplauseSound(soundEnabledRef.current);
         setShowConfetti(true);
@@ -138,7 +212,22 @@ export default function App() {
     }, 120);
   };
 
+  const handleReset = () => {
+    const resetState: PersistedState = {
+      drawCounts: { choco: 0, chocofilled: 0, almond: 0 },
+      remainingCounts: { ...INITIAL_STOCK },
+    };
+    drawCountsRef.current = resetState.drawCounts;
+    remainingRef.current = resetState.remainingCounts;
+    setDrawCounts(resetState.drawCounts);
+    setRemainingCounts(resetState.remainingCounts);
+    saveState(resetState);
+  };
+
   const totalDraws = drawCounts.choco + drawCounts.chocofilled + drawCounts.almond;
+  const totalRemaining =
+    remainingCounts.choco + remainingCounts.chocofilled + remainingCounts.almond;
+  const isDepleted = totalRemaining <= 0;
 
   return (
     <div className="bg-pastel-dots font-cute relative flex h-dvh flex-col items-center justify-between overflow-hidden px-4 py-3 sm:py-4">
@@ -206,21 +295,24 @@ export default function App() {
         <RouletteWheel
           rotation={rotation}
           isSpinning={isSpinning}
+          isDisabled={isDepleted}
           pointerKick={pointerKick}
           onSpin={triggerSpin}
         />
       </main>
 
-      {/* Bottom Prompt (shown on smaller screens where side speech bubbles hide, or while spinning) & Draw Count Tally */}
+      {/* Bottom Prompt & Draw Count Tally (never exposes remaining inventory or secret ratios) */}
       <footer className="relative z-10 flex shrink-0 flex-col items-center gap-1.5 text-center">
         <div
           className={`rounded-full border border-[#4B261E]/15 bg-[#FFFDF9]/90 px-5 py-1.5 text-[clamp(0.85rem,2vw,1.02rem)] text-[#53261B] shadow-[0_4px_12px_rgba(75,38,30,0.08)] ${
-            isSpinning ? 'block' : 'lg:hidden'
+            isSpinning || isDepleted ? 'block' : 'lg:hidden'
           }`}
         >
-          {isSpinning
-            ? '빙글빙글~ 과연 어떤 빼빼로가 나올까요?'
-            : '가운데 시작 버튼을 눌러 빼빼로를 뽑아 보세요'}
+          {isDepleted
+            ? '준비된 빼빼로 선물이 모두 소진되었어요!'
+            : isSpinning
+              ? '빙글빙글~ 과연 어떤 빼빼로가 나올까요?'
+              : '가운데 시작 버튼을 눌러 빼빼로를 뽑아 보세요'}
         </div>
 
         {totalDraws > 0 && (
@@ -233,7 +325,7 @@ export default function App() {
             <span aria-hidden="true">·</span>
             <button
               type="button"
-              onClick={() => setDrawCounts({ choco: 0, chocofilled: 0, almond: 0 })}
+              onClick={handleReset}
               className="cursor-pointer underline decoration-[#6E473D]/40 underline-offset-2 hover:text-[#4B261E]"
             >
               기록 초기화
@@ -245,6 +337,7 @@ export default function App() {
       {/* Winning Result Modal */}
       <ResultModal
         prize={winningPrize}
+        canSpinAgain={!isDepleted}
         onClose={() => setWinningPrize(null)}
         onSpinAgain={handleSpinAgain}
       />
