@@ -132,15 +132,15 @@ export default function App() {
     const currentMod = ((startRotation % 360) + 360) % 360;
     const deltaMod = (desiredMod - currentMod + 360) % 360;
 
-    // 12 to 15 full high-speed spins for a longer, suspenseful spin
-    const extraRevolutions = 12 + Math.floor(getSecureRandomUnit() * 4);
+    // 10 to 12 full spins for a brisk yet suspenseful pace
+    const extraRevolutions = 10 + Math.floor(getSecureRandomUnit() * 3);
     const totalDelta = extraRevolutions * 360 + deltaMod;
     const targetRotation = startRotation + totalDelta;
 
     const prefersReducedMotion =
       typeof window !== 'undefined' &&
       window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    const durationMs = prefersReducedMotion ? 600 : 7200;
+    const durationMs = prefersReducedMotion ? 600 : 5800;
 
     const startTime = performance.now();
     let lastPegIndex = Math.floor(startRotation / 30);
